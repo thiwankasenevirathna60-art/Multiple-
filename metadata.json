@@ -1,0 +1,5 @@
+{
+  "name": "Magic World - Nano Banana",
+  "description": "An AI-powered image generation tool allowing users to edit reference images using text prompts via the Nano Banana model.",
+  "requestFramePermissions": []
+}
