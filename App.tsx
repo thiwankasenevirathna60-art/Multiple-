@@ -488,25 +488,42 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderGallery = () => (
+  const renderGallery = () => {
+    // Calculate percentage, ensuring we don't divide by zero
+    const percentage = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+
+    return (
     <div className="min-h-screen flex flex-col bg-gray-900">
-       <div className="p-6 border-b border-white/10 flex items-center justify-between bg-gray-900/90 backdrop-blur sticky top-0 z-50">
-        <div>
+       <div className="p-6 border-b border-white/10 flex flex-col bg-gray-900/90 backdrop-blur sticky top-0 z-50 gap-4">
+        <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-white">Gallery</h2>
-            {isGenerating && (
-                <p className="text-xs text-purple-400 font-medium animate-pulse">
-                    Generating {Math.min(progress.current + 1, progress.total)} of {progress.total}...
-                </p>
-            )}
+            <Button 
+              variant="secondary" 
+              onClick={() => setScreen(AppScreen.HOME)} 
+              className="!py-2 !px-4 !text-sm"
+              disabled={isGenerating}
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : "New"}
+            </Button>
         </div>
-        <Button 
-          variant="secondary" 
-          onClick={() => setScreen(AppScreen.HOME)} 
-          className="!py-2 !px-4 !text-sm"
-          disabled={isGenerating}
-        >
-          {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : "New"}
-        </Button>
+
+        {isGenerating && (
+            <div className="space-y-2 animate-fade-in">
+                <div className="flex justify-between text-xs font-medium">
+                     <span className="text-purple-300">Generating...</span>
+                     <span className="text-white">{percentage}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300 ease-out rounded-full"
+                        style={{ width: `${percentage}%` }}
+                    />
+                </div>
+                 <p className="text-[10px] text-gray-400 text-center">
+                    {progress.current} of {progress.total} completed
+                </p>
+            </div>
+        )}
       </div>
 
       <div className="p-4 grid grid-cols-2 gap-4 auto-rows-fr">
@@ -545,7 +562,8 @@ const App: React.FC = () => {
          </div>
       )}
     </div>
-  );
+    );
+  };
 
   const renderPreview = () => {
     if (!selectedImage) return null;
