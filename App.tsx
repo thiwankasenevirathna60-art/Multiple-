@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Upload, Image as ImageIcon, Download, ArrowLeft, Wand2, Loader2, X, MessageSquare, HelpCircle, PenTool, Copy, Check, ChevronRight, Key } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Upload, Image as ImageIcon, Download, ArrowLeft, Wand2, Loader2, MessageSquare, HelpCircle, PenTool, Copy, Check, ChevronRight } from 'lucide-react';
 import { AppScreen, ImageReference, GeneratedImage } from './types';
 import { generateImageEdit, generatePromptsList } from './services/geminiService';
 import { Button } from './components/Button';
@@ -35,53 +35,17 @@ const App: React.FC = () => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isAllCopied, setIsAllCopied] = useState(false);
 
-  // API Key State
-  const [hasApiKey, setHasApiKey] = useState(false);
-
-  // Check for API Key on mount
-  useEffect(() => {
-    const checkKey = async () => {
-      try {
-        if (window.aistudio && window.aistudio.hasSelectedApiKey) {
-          const hasKey = await window.aistudio.hasSelectedApiKey();
-          setHasApiKey(hasKey);
-        } else {
-            // Fallback for dev environments where window.aistudio might not be mocked
-            // If process.env.API_KEY is present, we assume it's valid
-            setHasApiKey(true);
-        }
-      } catch (e) {
-        console.error("Error checking API key", e);
-      }
-    };
-    checkKey();
-  }, []);
-
   // Splash Screen Logic
   useEffect(() => {
-    if (screen === AppScreen.SPLASH && hasApiKey) {
+    if (screen === AppScreen.SPLASH) {
       const timer = setTimeout(() => {
         setScreen(AppScreen.MAIN_MENU);
       }, 4000); 
       return () => clearTimeout(timer);
     }
-  }, [screen, hasApiKey]);
+  }, [screen]);
 
   // Handlers
-  const handleSelectKey = async () => {
-    try {
-      if (window.aistudio && window.aistudio.openSelectKey) {
-        await window.aistudio.openSelectKey();
-        setHasApiKey(true);
-      }
-    } catch (e: any) {
-      if (e.message && e.message.includes("Requested entity was not found")) {
-        setHasApiKey(false);
-      }
-      console.error("Error selecting API key", e);
-    }
-  };
-
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -134,8 +98,7 @@ const App: React.FC = () => {
         setGeneratedImages(prev => [...prev, generatedImage]);
       } catch (error: any) {
         console.error(`Failed to generate for prompt: ${prompt}`, error);
-        // If we hit a permission error during generation, we might want to re-check auth, 
-        // but for now we just log it. The initial check should catch most cases.
+        // We log the error but continue with other prompts
       }
       setProgress(prev => ({ ...prev, current: i + 1 }));
     }
@@ -181,35 +144,6 @@ const App: React.FC = () => {
   };
 
   // --- RENDER SCREENS ---
-
-  const renderApiKeySelection = () => (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-8 text-center relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-900/20 rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-900/20 rounded-full blur-[120px]"></div>
-      </div>
-      
-      <div className="relative z-10 max-w-md w-full space-y-8 animate-fade-in-up">
-        <div className="flex justify-center">
-             <div className="mb-4 relative group">
-                <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl opacity-40"></div>
-                <img src={APP_LOGO_SRC} alt="Logo" className="w-32 h-32 object-contain drop-shadow-2xl relative z-10" />
-            </div>
-        </div>
-        <div>
-            <h1 className="text-3xl font-bold text-white mb-3">Setup Required</h1>
-            <p className="text-gray-400 mb-6">To access the Nano Banana model for image editing, please select a valid API key with billing enabled.</p>
-        </div>
-        <Button fullWidth onClick={handleSelectKey} className="group">
-            <Key className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-            Connect API Key
-        </Button>
-        <p className="text-xs text-gray-500 mt-4">
-             See <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline">billing documentation</a> for details.
-        </p>
-      </div>
-    </div>
-  );
 
   const renderSplash = () => (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[conic-gradient(at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-purple-900 to-slate-900 animate-fade-in relative overflow-hidden">
@@ -672,19 +606,6 @@ const App: React.FC = () => {
     );
   };
 
-  // Typescript declaration for window.aistudio
-  // In a real project, this would be in a d.ts file, but we keep it here to avoid file creation overhead if user doesn't ask.
-  // We'll rely on the existing declaration or `any` casting if needed, but App.tsx isn't strictly checking without d.ts in this snippets context.
-
-  if (!hasApiKey) {
-      return (
-        <div className="max-w-md mx-auto min-h-screen bg-black shadow-2xl overflow-hidden relative">
-          <div className="fixed inset-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-          {renderApiKeySelection()}
-        </div>
-      );
-  }
-
   return (
     <div className="max-w-md mx-auto min-h-screen bg-black shadow-2xl overflow-hidden relative">
        {/* Background noise/texture overlay for the whole app */}
@@ -701,15 +622,5 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-// Global augmentation
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    }
-  }
-}
 
 export default App;
