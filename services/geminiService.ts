@@ -1,8 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { GeminiImageResult } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 // Maps to "nano banana" as per instructions
 const IMAGE_MODEL_NAME = 'gemini-2.5-flash-image';
 // Model for text generation
@@ -18,6 +16,9 @@ export const generateImageEdit = async (
   prompt: string
 ): Promise<GeminiImageResult> => {
   try {
+    // Initialize client here to ensure we use the latest API Key if it changed
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     // Strip the data:image/...;base64, prefix if present for the API call
     const cleanBase64 = referenceImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
@@ -63,6 +64,9 @@ export const generateImageEdit = async (
  */
 export const generatePromptsList = async (description: string): Promise<string[]> => {
   try {
+    // Initialize client here to ensure we use the latest API Key if it changed
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     const prompt = `You are a creative assistant for an AI image generator. 
     The user wants a list of image prompts based on this description: "${description}".
     Generate a list of specific, detailed, and creative image prompts.
